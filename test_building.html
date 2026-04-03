@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<title>王英的测试网页 v1.0</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="./threejs.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- ONNX Runtime Web -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.0/dist/ort.min.js"></script>
+ 
+	</head>
+
+<body style="margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh;">
+
+    <!-- 标题区 -->
+    <div id="title-bar" style="flex: 0 0 60px; background: linear-gradient(135deg, rgba(10, 25, 41, 0.95) 0%, rgba(26, 35, 50, 0.95) 100%); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0, 212, 255, 0.3); z-index: 1000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.15);">
+        <h1 style="margin: 0; font-size: 26px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; color: #00d4ff; text-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 40px rgba(0, 212, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3); letter-spacing: 3px;">
+            结构信息查询系统
+        </h1>
+    </div>
+
+    <!-- 主内容区：仅作为模型容器，面板浮在模型之上 -->
+    <div id="main-content" style="flex: 1; position: relative; overflow: hidden; min-height: 0; background: #0a1929;">
+        
+        <!-- 模型区（全屏） -->
+        <div id="model-area" style="position: absolute; inset: 0; background: #0a1929; overflow: hidden;">
+            <div id="renderer-container" style="width: 100%; height: 100%;"></div>
+        </div>
+
+        <!-- 构件属性区：左上角浮动半透明面板 -->
+        <div id="element-info-panel" style="
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 280px;
+            max-height: calc(100% - 32px);
+            background: linear-gradient(135deg, rgba(10, 25, 41, 0.85) 0%, rgba(26, 35, 50, 0.85) 100%);
+            color: #e0f2fe;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            z-index: 10;
+        ">
+            <h3 style="margin: 0 0 12px 0; color: #00d4ff; font-size: 16px; font-weight: 600; border-bottom: 2px solid rgba(0, 212, 255, 0.5); padding-bottom: 8px; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);">构件属性</h3>
+            <div id="element-info" style="flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0, 212, 255, 0.3) transparent; display: none;">
+                <div id="element-details" style="line-height: 1.6;"></div>
+            </div>
+            <div id="element-info-placeholder" style="flex: 1; display: flex; align-items: center; justify-content: center; color: #7a9fb8; text-align: center; padding: 20px;">
+                <div>点击模型中的构件查看属性信息</div>
+            </div>
+            <!-- 摄像头区域 -->
+            <div id="camera-panel" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0, 212, 255, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="color: #00d4ff; font-size: 13px;">摄像头预览</span>
+                    <button id="camera-toggle-btn" style="background: rgba(0, 212, 255, 0.12); border: 1px solid rgba(0, 212, 255, 0.6); color: #e0f2fe; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; transition: all 0.2s ease;"
+                        onmouseover="this.style.background='rgba(0, 212, 255, 0.24)';"
+                        onmouseout="this.style.background='rgba(0, 212, 255, 0.12)';">
+                        打开摄像头
+                    </button>
+                </div>
+                <div style="position: relative; width: 100%; padding-top: 56%; border-radius: 8px; overflow: hidden; background: radial-gradient(circle at top, rgba(0,212,255,0.15), rgba(10,25,41,0.9)); border: 1px solid rgba(0, 212, 255, 0.25);">
+                    <video id="camera-video" autoplay playsinline muted style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                    <canvas id="camera-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; pointer-events: none; z-index: 2;"></canvas>
+                    <div id="camera-placeholder" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #7a9fb8; font-size: 12px; padding: 8px; text-align: center;">
+                        点击"打开摄像头"开始预览
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <button id="detect-toggle-btn" style="background: rgba(79, 195, 247, 0.12); border: 1px solid rgba(79, 195, 247, 0.6); color: #e0f2fe; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; transition: all 0.2s ease; flex: 1; margin-right: 6px;"
+                        onmouseover="this.style.background='rgba(79, 195, 247, 0.24)';"
+                        onmouseout="this.style.background='rgba(79, 195, 247, 0.12)';" disabled>
+                        开始检测
+                    </button>
+                    <div id="detect-status" style="color: #7a9fb8; font-size: 11px; flex: 1; text-align: right;">模型未加载</div>
+                </div>
+                <div id="camera-error" style="margin-top: 6px; color: #ff6b9d; font-size: 11px; display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 空间列表区：右上角浮动半透明面板 -->
+        <div id="space-list-panel" style="
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 280px;
+            max-height: calc(40% - 32px);
+            background: linear-gradient(135deg, rgba(10, 25, 41, 0.85) 0%, rgba(26, 35, 50, 0.85) 100%);
+            color: #e0f2fe;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            z-index: 10;
+        ">
+            <h3 style="margin: 0 0 12px 0; color: #00d4ff; font-size: 16px; font-weight: 600; border-bottom: 2px solid rgba(0, 212, 255, 0.5); padding-bottom: 8px; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);">空间列表</h3>
+            <div id="space-list" style="flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0, 212, 255, 0.3) transparent;">
+                <div style="color: #7a9fb8; text-align: center; padding: 20px;"><span style="color: #00d4ff;">⏳</span> 正在加载空间列表...</div>
+            </div>
+        </div>
+        
+        <!-- 图表区：空间列表区下方浮动半透明面板 -->
+        <div id="space-chart-panel" style="
+            position: absolute;
+            right: 16px;
+            width: 280px;
+            height: 220px;
+            background: linear-gradient(135deg, rgba(10, 25, 41, 0.88) 0%, rgba(26, 35, 50, 0.92) 100%);
+            color: #e0f2fe;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.45);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(14px);
+            z-index: 11;
+        ">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex: 0 0 auto;">
+            <h3 style="margin: 0; color: #00d4ff; font-size: 16px; font-weight: 600; border-bottom: 2px solid rgba(0, 212, 255, 0.5); padding-bottom: 8px; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); flex: 1;">环境数据监测</h3>
+            <button id="chart-close-btn" style="background: rgba(0, 212, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.5); color: #00d4ff; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; transition: all 0.3s ease; margin-left: 10px;" onmouseover="this.style.background='rgba(0, 212, 255, 0.22)'; this.style.borderColor='rgba(0, 212, 255, 0.8)';" onmouseout="this.style.background='rgba(0, 212, 255, 0.08)'; this.style.borderColor='rgba(0, 212, 255, 0.5)';">关闭</button>
+        </div>
+        <div id="space-chart" style="flex: 1; width: 100%; min-height: 0;"></div>
+    </div>
+
+ <!-- 
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "./threejs/build/three.module.js",
+                "three/addons/": "./threejs/examples/jsm/",
+                "three/examples/jsm/utils/BufferGeometryUtils": "./threejs/examples/jsm/utils/BufferGeometryUtils.js",
+                "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.5.23/build/index.module.js",
+                "web-ifc": "https://cdn.jsdelivr.net/npm/web-ifc@0.0.36/web-ifc-api.js",
+                "web-ifc-three": "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js"
+                "three-OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.173.0/examples/jsm/controls/OrbitControls.js",
+            }
+        }
+    </script>
+ -->
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.173.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.173.0/examples/jsm/",
+                "three/examples/jsm/utils/BufferGeometryUtils": "https://cdn.jsdelivr.net/npm/three@0.173.0/examples/jsm/utils/BufferGeometryUtils.js",
+                "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.5.23/build/index.module.js",
+                "web-ifc": "https://cdn.jsdelivr.net/npm/web-ifc@0.0.36/web-ifc-api.js",
+                "web-ifc-three": "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js"
+            }
+        }
+    </script>
+
+
+    <script type="module" src="./test_building.js"></script>
+</body>
+
+</html>

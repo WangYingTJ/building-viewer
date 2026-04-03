@@ -1,0 +1,148 @@
+body {
+	margin: 0;
+	background: linear-gradient(135deg, #0a1929 0%, #1a2332 50%, #0d1b2a 100%);
+	color: #e0f2fe;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+	font-size: 13px;
+	line-height: 24px;
+	overscroll-behavior: none;
+	overflow: hidden;
+}
+
+a {
+	color: #00d4ff;
+	text-decoration: none;
+	transition: color 0.3s ease;
+}
+
+a:hover {
+	color: #4fc3f7;
+	text-decoration: underline;
+	text-shadow: 0 0 8px rgba(79, 195, 247, 0.5);
+}
+
+button {
+	cursor: pointer;
+	text-transform: uppercase;
+}
+
+#info {
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	padding: 10px;
+	box-sizing: border-box;
+	text-align: center;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	z-index: 1; /* TODO Solve this in HTML */
+}
+
+a, button, input, select {
+	pointer-events: auto;
+}
+
+.lil-gui {
+	z-index: 2 !important; /* TODO Solve this in HTML */
+}
+
+@media all and ( max-width: 640px ) {
+	.lil-gui.root { 
+		right: auto;
+		top: auto;
+		max-height: 50%;
+		max-width: 80%;
+		bottom: 0;
+		left: 0;
+	}
+}
+
+#overlay {
+	position: absolute;
+	font-size: 16px;
+	z-index: 2;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	background: rgba(10, 25, 41, 0.85);
+	backdrop-filter: blur(10px);
+}
+
+	#overlay button {
+		background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(79, 195, 247, 0.2) 100%);
+		border: 1px solid rgba(0, 212, 255, 0.5);
+		border-radius: 8px;
+		color: #e0f2fe;
+		padding: 12px 18px;
+		text-transform: uppercase;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
+	}
+	
+	#overlay button:hover {
+		background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(79, 195, 247, 0.3) 100%);
+		border-color: rgba(0, 212, 255, 0.8);
+		box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+		transform: translateY(-2px);
+	}
+
+#notSupported {
+	width: 50%;
+	margin: auto;
+	background-color: #f00;
+	margin-top: 20px;
+	padding: 10px;
+}
+
+/* 深蓝智慧风格滚动条 */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: rgba(10, 25, 41, 0.3);
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: linear-gradient(135deg, rgba(0, 212, 255, 0.5) 0%, rgba(79, 195, 247, 0.5) 100%);
+	border-radius: 4px;
+	border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(135deg, rgba(0, 212, 255, 0.7) 0%, rgba(79, 195, 247, 0.7) 100%);
+	box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+}
+
+/* 标题栏动画 */
+@keyframes gradient-shift {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+#title-bar {
+	user-select: none;
+	pointer-events: none;
+}
+
+#title-bar h1 {
+	pointer-events: none;
+}
